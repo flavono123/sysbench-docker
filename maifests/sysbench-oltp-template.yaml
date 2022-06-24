@@ -1,0 +1,65 @@
+# sysbench-prepare
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  name: ${TEST_NAME}
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      initContainers:
+      - args:
+        - --db-driver=mysql
+        - --mysql-host=mycluster.mysql-cluster
+        - --mysql-port=3306
+        - --mysql-user=sysbench
+        - --mysql-password=sysbench
+        - --mysql-db=sysbench
+        - --table-size=10000
+        - --threads=4
+        - --tables=1
+        - ${TEST_FILE_PATH}
+        - prepare
+        image: vonogoru123/sysbench
+        name: sysbench-prepare
+      - args:
+        - --db-driver=mysql
+        - --mysql-host=mycluster.mysql-cluster
+        - --mysql-port=3306
+        - --mysql-user=sysbench
+        - --mysql-password=sysbench
+        - --mysql-db=sysbench
+        - --report-interval=10
+        - --table-size=10000
+        - --threads=4
+        - --tables=1
+        - --time=180
+        - ${TEST_FILE_PATH}
+        - run
+        image: vonogoru123/sysbench
+        name: sysbench-run
+      containers:
+      - args:
+        - --db-driver=mysql
+        - --mysql-host=mycluster.mysql-cluster
+        - --mysql-port=3306
+        - --mysql-user=sysbench
+        - --mysql-password=sysbench
+        - --mysql-db=sysbench
+        - --table-size=10000
+        - --threads=4
+        - --tables=1
+        - ${TEST_FILE_PATH}
+        - cleanup
+        image: vonogoru123/sysbench
+        name: sysbench-cleanup
+      nodeSelector:
+        kubernetes.io/hostname: cluster1-master1
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      restartPolicy: Never
+status: {}
